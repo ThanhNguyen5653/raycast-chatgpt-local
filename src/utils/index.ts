@@ -1,9 +1,11 @@
 import { Chat, Message } from "../type";
 import path from "node:path";
 import * as fs from "node:fs";
-import OpenAI from "openai/index";
 
-type ChatCompletionContentPart = OpenAI.ChatCompletionContentPart;
+// Type for chat completion content part, matching the structure used in API calls
+export type ChatCompletionContentPart =
+  | { type: "text"; text: string }
+  | { type: "image_url"; image_url: { url: string } };
 
 function countOpenAITokens(text: string): number {
   // 100 tokens ~= 75 words

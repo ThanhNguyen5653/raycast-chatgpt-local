@@ -10,13 +10,11 @@ export const IMPROVE_WRITING_COMMAND_ID: string = `${DEFAULT_AI_COMMAND_ID_PREFI
 export const DEFAULT_COMMANDS: Record<string, Command> = {
   [FIX_SPELLING_AND_GRAMMAR_COMMAND_ID]: {
     id: FIX_SPELLING_AND_GRAMMAR_COMMAND_ID,
-    name: "Fix Spelling and Grammar",
+    name: "Summarize Text",
     prompt:
-      "You are an assistant that fixes spelling, grammar and punctuation. Don't insert any " +
-      "extra information; only provide the corrected text. After receiving corrections, the user can request " +
-      "clarifications, and you need to answer them in detail.",
-    model: "gpt-4o-mini",
-    temperature: "0.7",
+      "You are an assistant that summarizes text into concise, clear bullet points. Don't add extra commentary or information—only return the summarized bullet points. Keep each point short and direct. After the summary, the user may ask for clarification, which you should then answer in detail.",
+    model: "cheap-summarizer",
+    temperature: "1",
     contentSource: "selectedText",
     isDisplayInput: true,
   },
@@ -28,6 +26,7 @@ After receiving corrections, the user can request clarifications, and you need t
 Strictly follow these rules:
 - Correct spelling, grammar, and punctuation errors in the given text
 - Enhance clarity and conciseness without altering the original meaning
+- Do not use any dashes or emojis
 - Divide lengthy sentences into shorter, more readable ones
 - Eliminate unnecessary repetition while preserving important points
 - Prioritize active voice over passive voice for a more engaging tone

@@ -1,7 +1,6 @@
 import { ActionPanel, Action, Icon, List, useNavigation } from "@raycast/api";
 import { useEffect, useState } from "react";
 import { DestructiveAction, PinAction, PrimaryAction } from "./actions";
-import { PreferencesActionSection } from "./actions/preferences";
 import Ask from "./ask";
 import { useConversations } from "./hooks/useConversations";
 import { Conversation as ConversationType } from "./type";
@@ -98,7 +97,6 @@ export default function Conversation() {
           shortcut={{ modifiers: ["cmd", "shift"], key: "delete" }}
         />
       </ActionPanel.Section>
-      <PreferencesActionSection />
     </ActionPanel>
   );
 

@@ -1,7 +1,7 @@
 import { LocalStorage, showToast, Toast } from "@raycast/api";
 import { useCallback, useEffect, useMemo, useState, useRef } from "react";
 import { Model, ModelHook } from "../type";
-import { getConfiguration, useChatGPT } from "./useChatGPT";
+import { getConfiguration, getApiConfig } from "./useChatGPT";
 import { useProxy } from "./useProxy";
 
 export const DEFAULT_MODEL: Model = {
@@ -20,61 +20,34 @@ export function useModel(): ModelHook {
   const [data, setData] = useState<Record<string, Model>>({});
   const [isLoading, setLoading] = useState<boolean>(true);
   const [isFetching, setFetching] = useState<boolean>(true);
-  const gpt = useChatGPT();
   const proxy = useProxy();
   const { useAzure, isCustomModel } = getConfiguration();
-  const [option, setOption] = useState<Model["option"][]>(["gpt-4o-mini", "chatgpt-4o-latest"]);
+  const [option, setOption] = useState<Model["option"][]>([
+    "gpt-4o-mini",
+    "gpt-4.1",
+    "gpt-4.1-mini",
+    "gpt-4.1-nano",
+    "llama-3.3-70b",
+    "exaone-deep-32b",
+    "exaone-3-5-32b-instruct",
+    "deepseek-r1-distill-llama-70b",
+    "mythomax-l2-13b-lite",
+    "Llama-3.2-11B-Vision-Instruct",
+    "gemini-2.0-flash",
+    "gemini-2.5-flash-preview-04-17",
+    "cheap-summarizer",
+  ]);
+
   const isInitialMount = useRef(true);
 
   useEffect(() => {
     if (isCustomModel) {
-      // If choose to use custom model, we don't need to fetch models from the API
       setFetching(false);
       return;
     }
-    if (!useAzure) {
-      gpt.models
-        .list({ httpAgent: proxy })
-        .then((res) => {
-          let models = res.data;
-          // some provider return text/plain content type
-          // and the sdk `defaultParseResponse` simply return `text`
-          if (models.length === 0) {
-            try {
-              const body = JSON.parse((res as unknown as { body: string }).body);
-              models = body.data;
-            } catch (e) {
-              // ignore try to parse it
-            }
-          }
-          setOption(models.map((x) => x.id));
-        })
-        .catch(async (err) => {
-          console.error(err);
-          if (!(err instanceof Error || err.message)) {
-            return;
-          }
-          await showToast(
-            err.message.includes("401")
-              ? {
-                  title: "Could not authenticate to API",
-                  message: "Please ensure that your API token is valid",
-                  style: Toast.Style.Failure,
-                }
-              : {
-                  title: "Error",
-                  message: err.message,
-                  style: Toast.Style.Failure,
-                },
-          );
-        })
-        .finally(() => {
-          setFetching(false);
-        });
-    } else {
-      setFetching(false);
-    }
-  }, [gpt]);
+    // Remove OpenAI SDK model listing. Optionally, fetch from your custom endpoint if supported.
+    setFetching(false);
+  }, [isCustomModel]);
 
   useEffect(() => {
     (async () => {

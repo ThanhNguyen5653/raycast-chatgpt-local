@@ -2,7 +2,6 @@ import { ActionPanel, Icon, List } from "@raycast/api";
 import { useState } from "react";
 import { DestructiveAction, TextToSpeechAction } from "./actions";
 import { CopyActionSection } from "./actions/copy";
-import { PreferencesActionSection } from "./actions/preferences";
 import { SaveActionSection } from "./actions/save";
 import { useHistory } from "./hooks/useHistory";
 import { useSavedChat } from "./hooks/useSavedChat";
@@ -39,7 +38,6 @@ export default function History() {
           shortcut={{ modifiers: ["cmd", "shift"], key: "delete" }}
         />
       </ActionPanel.Section>
-      <PreferencesActionSection />
     </ActionPanel>
   );
 

@@ -1,20 +1,18 @@
+import { useState, useCallback } from "react";
 import { getPreferenceValues } from "@raycast/api";
-import OpenAI from "openai";
-import { useState } from "react";
-import { getConfigUrl } from "../utils";
 
-export function useChatGPT(): OpenAI {
-  const [chatGPT] = useState(() => {
-    const preferences = getPreferenceValues<Preferences>();
-
-    return new OpenAI({
-      apiKey: preferences.apiKey,
-      baseURL: getConfigUrl(preferences),
-    });
-  });
-  return chatGPT;
+export function getApiConfig() {
+  const preferences = getPreferenceValues();
+  return {
+    endpoint: preferences.apiEndpoint,
+    token: preferences.bearerToken,
+  };
 }
 
-export function getConfiguration(): Preferences {
-  return getPreferenceValues<Preferences>();
+export function getConfiguration() {
+  const preferences = getPreferenceValues<Preferences>();
+  return {
+    useAzure: preferences.useAzure || false,
+    isCustomModel: preferences.isCustomModel || false,
+  };
 }

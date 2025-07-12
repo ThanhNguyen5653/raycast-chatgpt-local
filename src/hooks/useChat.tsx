@@ -1,3 +1,4 @@
+import "dotenv/config";
 import { clearSearchBar, getPreferenceValues, showToast, Toast } from "@raycast/api";
 import { useCallback, useMemo, useRef, useState } from "react";
 import say from "say";
@@ -5,7 +6,7 @@ import { v4 as uuidv4 } from "uuid";
 import { Chat, ChatHook, Model } from "../type";
 import { buildUserMessage, chatTransformer } from "../utils";
 import { useAutoTTS } from "./useAutoTTS";
-import { getConfiguration, useChatGPT } from "./useChatGPT";
+import { getApiConfig } from "./useChatGPT";
 import { useHistory } from "./useHistory";
 import { useProxy } from "./useProxy";
 import { ChatCompletion, ChatCompletionChunk } from "openai/resources/chat/completions";
@@ -34,11 +35,9 @@ export function useChat<T extends Chat>(props: T[]): ChatHook {
   const history = useHistory();
   const isAutoTTS = useAutoTTS();
   const proxy = useProxy();
-  const chatGPT = useChatGPT();
 
   async function ask(question: string, files: string[], model: Model) {
     clearSearchBar();
-
     setLoading(true);
     const toast = await showToast({
       title: "Getting your answer...",
@@ -51,130 +50,90 @@ export function useChat<T extends Chat>(props: T[]): ChatHook {
       answer: "",
       created_at: new Date().toISOString(),
     };
+    setData((prev) => [...prev, chat]);
+    setTimeout(async () => setSelectedChatId(chat.id), 50);
 
-    setData((prev) => {
-      return [...prev, chat];
-    });
-
-    setTimeout(async () => {
-      setSelectedChatId(chat.id);
-    }, 50);
-
-    const getHeaders = function () {
-      const config = getConfiguration();
-      if (!config.useAzure) {
-        return { apiKey: {}, params: {} };
-      }
-      return {
-        apiKey: { "api-key": config.apiKey },
-        params: { "api-version": "2023-06-01-preview" },
-      };
-    };
-
+    const { endpoint, token } = getApiConfig();
+    if (!endpoint) {
+      setErrorMsg("API endpoint is undefined. Please check your .env or configuration.");
+      await showToast({
+        title: "API endpoint is undefined",
+        message: "Check your .env or configuration for API_ENDPOINT",
+        style: Toast.Style.Failure,
+      });
+      setLoading(false);
+      return;
+    }
+    if (!token) {
+      setErrorMsg("Bearer token is undefined. Please check your .env or configuration.");
+      await showToast({
+        title: "Bearer token is undefined",
+        message: "Check your .env or configuration for BEARER_TOKEN",
+        style: Toast.Style.Failure,
+      });
+      setLoading(false);
+      return;
+    }
     abortControllerRef.current = new AbortController();
     const { signal: abortSignal } = abortControllerRef.current;
-
-    await chatGPT.chat.completions
-      .create(
-        {
+    try {
+      const response = await fetch(`${endpoint}/api/ai-gateway/v1/chat/completions`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({
           model: model.option,
-          temperature: Number(model.temperature),
           messages: [
             ...chatTransformer(data.reverse(), model.prompt),
             { role: "user", content: buildUserMessage(question, files) },
           ],
-          stream: useStream,
-        },
-        {
-          httpAgent: proxy,
-          // https://github.com/openai/openai-node/blob/master/examples/azure.ts
-          // Azure OpenAI requires a custom baseURL, api-version query param, and api-key header.
-          query: { ...getHeaders().params },
-          headers: { ...getHeaders().apiKey },
-          signal: abortSignal,
-        },
-      )
-      .then(async (res) => {
-        if (useStream) {
-          const stream = res as Stream<ChatCompletionChunk>;
-
-          for await (const chunk of stream) {
-            try {
-              const content = chunk.choices[0]?.delta?.content;
-
-              if (content) {
-                chat.answer += chunk.choices[0].delta.content;
-                setStreamData({ ...chat, answer: chat.answer });
-              }
-            } catch (error) {
-              if (abortSignal.aborted) {
-                toast.title = "Request canceled";
-                toast.message = undefined;
-                setIsAborted(true);
-              } else {
-                const message = `Couldn't stream message: ${error}`;
-                toast.title = "Error";
-                toast.message = message;
-                setErrorMsg(message);
-              }
-              toast.style = Toast.Style.Failure;
-              setLoading(false);
-            }
-          }
-
-          setTimeout(async () => {
-            setStreamData(undefined);
-          }, 5);
-        } else {
-          const completion = res as ChatCompletion;
-          chat = { ...chat, answer: completion.choices.map((x) => x.message)[0]?.content ?? "" };
-        }
-        if (isAutoTTS) {
-          say.stop();
-          say.speak(chat.answer);
-        }
-        setLoading(false);
-        if (abortSignal.aborted) {
-          toast.title = "Request canceled";
-          toast.style = Toast.Style.Failure;
-          setIsAborted(true);
-        } else {
-          toast.title = "Got your answer!";
-          toast.style = Toast.Style.Success;
-        }
-
-        setData((prev) => {
-          return prev.map((a) => {
-            if (a.id === chat.id) {
-              return chat;
-            }
-            return a;
-          });
-        });
-        if (!isHistoryPaused) {
-          await history.add(chat);
-        }
-      })
-      .catch((err) => {
-        if (abortSignal.aborted) {
-          toast.title = "Request canceled";
-          toast.message = undefined;
-          setIsAborted(true);
-        } else if (err?.message) {
-          if (err.message.includes("429")) {
-            const message = "Rate limit reached for requests";
-            toast.title = "Error";
-            toast.message = message;
-            setErrorMsg(message);
-          } else {
-            toast.title = "Error";
-            toast.message = err.message;
-            setErrorMsg(err.message);
-          }
-        }
-        toast.style = Toast.Style.Failure;
-        setLoading(false);
+          temperature: Number(model.temperature),
+          max_tokens: 500,
+        }),
+        signal: abortSignal,
       });
+      let errorDetail = "";
+      if (!response.ok) {
+        try {
+          const text = await response.text();
+          try {
+            const json = JSON.parse(text);
+            errorDetail = JSON.stringify(json, null, 2);
+          } catch {
+            errorDetail = text;
+          }
+        } catch (e) {
+          errorDetail = `Failed to parse error response: ${e}`;
+        }
+        throw new Error(errorDetail || `HTTP error: ${response.status}`);
+      }
+      const result = await response.json();
+      chat = { ...chat, answer: result.choices?.[0]?.message?.content ?? "" };
+      if (isAutoTTS) {
+        say.stop();
+        say.speak(chat.answer);
+      }
+      setLoading(false);
+      toast.title = "Got your answer!";
+      toast.style = Toast.Style.Success;
+      setData((prev) => prev.map((a) => (a.id === chat.id ? chat : a)));
+      if (!isHistoryPaused) await history.add(chat);
+    } catch (err: any) {
+      console.error("Chat API error:", err);
+      if (abortSignal.aborted) {
+        toast.title = "Request canceled";
+        toast.message = undefined;
+        setIsAborted(true);
+      } else {
+        toast.title = `Error: ${err?.name || "Unknown"}`;
+        toast.message = err?.message || JSON.stringify(err) || String(err);
+        setErrorMsg(err?.message || JSON.stringify(err) || String(err));
+      }
+      toast.style = Toast.Style.Failure;
+      setLoading(false);
+    }
   }
 
   const abort = useCallback(() => {
@@ -219,4 +178,12 @@ export function useChat<T extends Chat>(props: T[]): ChatHook {
       abort,
     ],
   );
+}
+
+export function getApiConfig() {
+  const preferences = getPreferenceValues();
+  return {
+    endpoint: preferences.apiEndpoint,
+    token: preferences.bearerToken,
+  };
 }

@@ -1,7 +1,6 @@
 import { Action, ActionPanel, Icon, List, useNavigation } from "@raycast/api";
 import { useState } from "react";
 import { DestructiveAction, PinAction } from "./actions";
-import { PreferencesActionSection } from "./actions/preferences";
 import { DEFAULT_MODEL, useModel } from "./hooks/useModel";
 import { Model as ModelType } from "./type";
 import { ModelForm } from "./views/model/form";
@@ -70,7 +69,6 @@ export default function Model() {
           </ActionPanel.Section>
         </>
       )}
-      <PreferencesActionSection />
     </ActionPanel>
   );
 

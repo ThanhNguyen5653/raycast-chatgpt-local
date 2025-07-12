@@ -2,7 +2,6 @@ import { Action, ActionPanel, Detail, Toast, getPreferenceValues, showToast } fr
 import { Stream } from "openai/streaming";
 import { useEffect, useState } from "react";
 
-import { useChatGPT } from "../hooks/useChatGPT";
 import { AskImageProps, Model } from "../type";
 import { toUnit } from "../utils";
 import { LoadFrom, loadFromClipboard, loadFromFinder } from "../utils/load";
@@ -30,7 +29,6 @@ function bufferToDataUrl(mimeType: string, buffer: Buffer) {
 }
 
 export function VisionView(props: AskImageProps) {
-  const chatGPT = useChatGPT();
   const [useStream] = useState<boolean>(() => {
     return getPreferenceValues<{
       useStream: boolean;
@@ -71,37 +69,13 @@ export function VisionView(props: AskImageProps) {
       }
       imageUrl = bufferToDataUrl(`image/${data.type}`, data.data);
 
-      const streamOrCompletion = await chatGPT.chat.completions.create({
-        model: VISION_MODEL.option,
-        temperature: Number(VISION_MODEL.temperature),
-        stream: useStream,
-        messages: [
-          {
-            role: "system",
-            content: `${VISION_MODEL.prompt}`,
-          },
-          {
-            role: "user",
-            content: [
-              {
-                type: "text",
-                text: `${prompt ? prompt : "Describe this image:"}`,
-              },
-              {
-                type: "image_url",
-                image_url: { url: imageUrl },
-              },
-            ],
-          },
-        ],
-      });
-
-      const imageWidth = data.type.width;
-      const imageHeight = data.type.height;
-      setImageMeta({ height: imageHeight, width: imageWidth, size: data.data.length });
-      setImagePromptTokenCount(countImageTokens(imageWidth, imageHeight));
-      setPromptTokenCount(countToken(VISION_MODEL.prompt + prompt));
-      return streamOrCompletion;
+      // Remove chatGPT usage and add a placeholder for API call
+      // const streamOrCompletion = await chatGPT.chat.completions.create({ ... });
+      // TODO: Integrate vision API call here
+      // For now, just set a placeholder response
+      setResponse("Vision API integration needed.");
+      setLoading(false);
+      return;
     } catch (error) {
       await showToast({ style: Toast.Style.Failure, title: "Error" });
       setLoading(false);
@@ -117,29 +91,11 @@ export function VisionView(props: AskImageProps) {
     let duration = 0;
     const toast = await showToast(Toast.Style.Animated, toast_title);
 
-    const resp = await getChatResponse(user_prompt);
-    if (!resp) return;
-
-    let response_ = "";
-    function appendResponse(part: string) {
-      response_ += part;
-      setResponse(response_);
-      setResponseTokenCount(countToken(response_));
-    }
-
-    if (resp instanceof Stream) {
-      for await (const part of resp) {
-        appendResponse(part.choices[0]?.delta?.content ?? "");
-      }
-    } else {
-      appendResponse(resp.choices[0]?.message?.content ?? "");
-    }
-
+    // Only set the placeholder response for now
+    setResponse("Vision API integration needed.");
     setLoading(false);
-    const done = new Date();
-    duration = (done.getTime() - now.getTime()) / 1000;
     toast.style = Toast.Style.Success;
-    toast.title = `Finished in ${duration} seconds`;
+    toast.title = `Finished in 0 seconds`;
   }
 
   useEffect(() => {

@@ -3,7 +3,6 @@ import { v4 as uuidv4 } from "uuid";
 import { DestructiveAction, PrimaryAction, TextToSpeechAction } from "../actions";
 import { CopyActionSection } from "../actions/copy";
 import { FormInputActionSection } from "../actions/form-input";
-import { PreferencesActionSection } from "../actions/preferences";
 import { SaveActionSection } from "../actions/save";
 import { Chat, ChatViewProps } from "../type";
 import { AnswerDetailView } from "./answer-detail";
@@ -77,7 +76,6 @@ export const ChatView = ({
           />
         </ActionPanel.Section>
       )}
-      <PreferencesActionSection />
     </ActionPanel>
   );
 
