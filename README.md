@@ -5,7 +5,7 @@
 <h1 align="center">ChatGPT</h1>
 
 <h3 align="center">
-A fork of the Raycast ChatGPT Extension with enhanced features
+A fork of the Raycast ChatGPT Extension
 </h3>
 
 ![Conversation View](metadata/1.png)
@@ -15,6 +15,21 @@ A fork of the Raycast ChatGPT Extension with enhanced features
 This is a fork of the [official ChatGPT extension for Raycast](https://www.raycast.com/abielzulio/chatgpt), enhanced with additional features and improvements. It allows you to interact with OpenAI's ChatGPT directly from your command bar.
 
 # Getting Started
+
+## Setup
+
+Clone the repository and start the development server:
+
+```sh
+git clone <repo>
+cd chatgpt
+npm install
+npm run dev
+```
+
+Once the extension is up and running, you can close the terminal – ctrl/cmd + z
+
+###
 
 ### Authentication Setup
 
