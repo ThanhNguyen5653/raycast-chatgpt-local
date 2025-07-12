@@ -21,7 +21,7 @@ This is a fork of the [official ChatGPT extension for Raycast](https://www.rayca
 Clone the repository and start the development server:
 
 ```sh
-git clone <https://github.com/ThanhNguyen5653/raycast-chatgpt-ext.git>
+git clone https://github.com/ThanhNguyen5653/raycast-chatgpt-ext.git
 cd chatgpt
 npm install
 npm run dev
