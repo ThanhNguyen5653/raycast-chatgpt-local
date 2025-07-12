@@ -25,7 +25,7 @@ export default function History() {
         <DestructiveAction
           title="Remove"
           dialog={{
-            title: "Are you sure you want to remove this answer from your history?",
+            title: "Are you sure you want to remove this from your history?",
           }}
           onAction={() => history.remove(chat)}
         />
